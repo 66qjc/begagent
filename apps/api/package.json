@@ -1,0 +1,27 @@
+{
+  "name": "@career/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/app.ts"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "build": "tsup src/server.ts --format esm --out-dir dist --sourcemap"
+  },
+  "dependencies": {
+    "@career/contracts": "workspace:*",
+    "@career/core": "workspace:*",
+    "@career/infrastructure": "workspace:*",
+    "@fastify/cors": "11.1.0",
+    "fastify": "5.6.0",
+    "zod": "4.1.5"
+  },
+  "devDependencies": {
+    "tsx": "4.20.5",
+    "tsup": "8.5.0",
+    "typescript": "5.9.2"
+  }
+}

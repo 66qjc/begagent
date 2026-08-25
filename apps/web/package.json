@@ -1,0 +1,27 @@
+{
+  "name": "@career/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 4318",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4318"
+  },
+  "dependencies": {
+    "@career/core": "workspace:*",
+    "lucide-react": "1.33.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@testing-library/react": "16.3.2",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.1.0",
+    "jsdom": "30.0.1",
+    "typescript": "5.9.2",
+    "vite": "8.2.2",
+    "vitest": "3.2.4"
+  }
+}

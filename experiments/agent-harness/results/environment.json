@@ -1,0 +1,62 @@
+{
+  "startedAt": "2026-08-25T15:13:50Z",
+  "deadlineAt": "2026-08-26T07:13:50Z",
+  "budgetHours": 16,
+  "node": "v24.14.1",
+  "pnpm": "10.28.1",
+  "packageManagerInvocation": "corepack pnpm",
+  "ambientPnpm": "11.19.0",
+  "toolchainObservation": "The ambient Codex fallback pnpm differs from packageManager and attempted to purge pnpm 10 node_modules. All reproducible commands use corepack pnpm@10.28.1.",
+  "typescript": "5.9.2",
+  "vitest": "3.2.4",
+  "candidates": {
+    "@langchain/langgraph": {
+      "version": "1.4.12",
+      "license": "MIT",
+      "engines": { "node": ">=18" },
+      "role": "main-workflow candidate (tested second)"
+    },
+    "@mastra/core": {
+      "version": "1.61.0",
+      "license": "Apache-2.0",
+      "engines": { "node": ">=22.13.0" },
+      "role": "main-workflow candidate (tested first)"
+    }
+  },
+  "registryMetadataQueriedAt": "2026-08-25T15:13:50Z",
+  "registryQueryCommands": [
+    "corepack pnpm view @langchain/langgraph version license engines --json",
+    "corepack pnpm view @mastra/core version license engines --json"
+  ],
+  "enginesSatisfied": true,
+  "installation": {
+    "command": "corepack pnpm --dir experiments/agent-harness install --ignore-workspace",
+    "lockfile": "experiments/agent-harness/pnpm-lock.yaml",
+    "workspaceLockfileChanged": false,
+    "typescriptCliVerified": "5.9.2"
+  },
+  "productBaseline": {
+    "command": "corepack pnpm verify",
+    "result": "passed",
+    "testFiles": 16,
+    "tests": 50,
+    "typecheck": "passed",
+    "build": "passed"
+  },
+  "isolation": {
+    "spikeDir": "experiments/agent-harness",
+    "outsideWorkspace": true,
+    "workspaceGlobs": ["apps/*", "packages/*"],
+    "note": "pnpm-workspace.yaml does not include experiments/*, so the spike package is isolated from the product workspace and its lockfile."
+  },
+  "installRecord": {
+    "installCommand": "CI=true corepack pnpm install --ignore-workspace",
+    "rebuildCommand": "CI=true corepack pnpm rebuild --ignore-workspace better-sqlite3 esbuild",
+    "packagesInstalled": ["@langchain/langgraph@1.4.12", "@mastra/core@1.61.0", "better-sqlite3@12.2.0", "zod@4.1.5"],
+    "nativeModuleVerified": "better-sqlite3 native binding loads and queries successfully",
+    "spikeLockfileCreated": true,
+    "rootLockfileHashBefore": "c2f7ec465a07d700bc43ef989818129a",
+    "rootLockfileHashAfter": "c2f7ec465a07d700bc43ef989818129a",
+    "rootProductCodeUnchanged": true
+  }
+}

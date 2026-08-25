@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.playwright-cli/
+.superpowers/
+graphify-out/
+output/
+data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.log
+.env
+.env.*
+!.env.example

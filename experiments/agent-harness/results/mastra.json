@@ -1,0 +1,26 @@
+{
+  "candidate": "mastra",
+  "startedAt": "2026-08-25T15:30:31Z",
+  "package": "@mastra/core@1.61.0",
+  "license": "Apache-2.0",
+  "directDependencies": 32,
+  "peerDependencies": 1,
+  "transitiveDependencies": 267,
+  "extraServicesRequired": "none (using @mastra/core built-in MemoryStorage; custom SQLite storage adapter for restart recovery)",
+  "docsUrl": "https://mastra.ai/docs",
+  "apiSurface": {
+    "workflow": "createWorkflow from @mastra/core/workflows",
+    "step": "createStep from @mastra/core/workflows",
+    "suspend": "suspend({}) inside step execute",
+    "resume": "run.resume({ step, resumeData })",
+    "recovery": "workflow.getWorkflowRunById + createWorkflowStateReader",
+    "storage": "MemoryStorage (in-memory) or custom WorkflowsStorage impl",
+    "streaming": "run.start watch/stream or step writer"
+  },
+  "fiveHourDeadline": "2026-08-25T20:30:31Z",
+  "hardGate": "pending",
+  "firstGreenMinutes": null,
+  "implLOC": null,
+  "glueLOC": null,
+  "failedTestRuns": 0
+}

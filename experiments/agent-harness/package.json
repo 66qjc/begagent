@@ -1,0 +1,26 @@
+{
+  "name": "@beg/agent-harness-spike",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "verify": "pnpm typecheck && pnpm test"
+  },
+  "dependencies": {
+    "@langchain/langgraph": "1.4.12",
+    "@mastra/core": "1.61.0",
+    "better-sqlite3": "12.2.0",
+    "zod": "4.1.5"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "7.6.13",
+    "@types/node": "24.3.0",
+    "tsx": "4.20.5",
+    "typescript": "5.9.2",
+    "vitest": "3.2.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["better-sqlite3", "esbuild"]
+  }
+}
