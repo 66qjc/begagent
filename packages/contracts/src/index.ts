@@ -12,6 +12,22 @@ export const ActionRiskSchema = z.enum(['green', 'yellow', 'red', 'black'])
 
 export const PolicyOutcomeSchema = z.enum(['execute', 'awaiting_approval', 'forbidden'])
 
+export const MissionStatusSchema = z.enum(['active', 'completed'])
+
+export const PursuitStageSchema = z.enum([
+  'discovered',
+  'qualified',
+  'growth_plan',
+  'evidence_sprint',
+  'materials_ready',
+  'application_awaiting_approval',
+  'application_submitted',
+  'hr_active',
+  'completed',
+])
+
+export const PursuitRouteSchema = z.enum(['direct', 'growth'])
+
 export const PolicyRuleSchema = z.object({
   id: z.string().trim().min(1).max(120),
   description: z.string().trim().min(1).max(500),
@@ -181,6 +197,9 @@ export const DocumentVerificationSchema = z.object({
 
 export type AgentKind = z.infer<typeof AgentKindSchema>
 export type ActionRisk = z.infer<typeof ActionRiskSchema>
+export type MissionStatus = z.infer<typeof MissionStatusSchema>
+export type PursuitStage = z.infer<typeof PursuitStageSchema>
+export type PursuitRoute = z.infer<typeof PursuitRouteSchema>
 export type CareerPolicyConfig = z.infer<typeof CareerPolicyConfigSchema>
 export type RuntimeProviderConfig = z.infer<typeof RuntimeProviderConfigSchema>
 export type RuntimeProvidersConfig = z.infer<typeof RuntimeProvidersConfigSchema>

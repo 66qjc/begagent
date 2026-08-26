@@ -2,26 +2,28 @@ import { describe, expect, it } from 'vitest'
 import * as core from '@career/core'
 
 interface WorkspaceLike {
-  mission: { id: string; stage: string; ownerAgent: string; version: number } | null
-  jobs: Array<{ id: string; title: string }>
-  tasks: Array<{ ownerAgent: string; status: string; handoff?: { fromAgent: string; toAgent: string; memoryRefs: string[] } }>
-  evidence: Array<{ id: string; source: string; status: string }>
+  mission: { id: string; status: string; ownerAgent: string; version: number } | null
+  pursuits: Array<{ id: string; stage: string; route: string; version: number }>
+  jobs: Array<{ id: string; pursuitId: string; title: string }>
+  tasks: Array<{ pursuitId: string; ownerAgent: string; status: string; handoff?: { fromAgent: string; toAgent: string; memoryRefs: string[] } }>
+  evidence: Array<{ id: string; pursuitId: string; source: string; status: string }>
   memories: Array<{ id: string; evidenceIds: string[]; status: string }>
-  resumes: Array<{ version: number; evidenceIds: string[] }>
-  actions: Array<{ id: string; type: string; risk: string; status: string; version: number }>
-  applications: Array<{ status: string; externalId?: string }>
-  hrMessages: Array<{ direction: string; content: string }>
+  resumes: Array<{ pursuitId: string; version: number; evidenceIds: string[] }>
+  actions: Array<{ id: string; pursuitId: string; type: string; risk: string; status: string; version: number }>
+  applications: Array<{ pursuitId: string; status: string; externalId?: string }>
+  hrMessages: Array<{ pursuitId: string; direction: string; content: string }>
   events: Array<{ seq: number; type: string }>
 }
 
 interface OrchestratorLike {
   resetDemo(): Promise<WorkspaceLike>
-  analyzeJob(input: { title: string; company: string; location: string; description: string }): Promise<WorkspaceLike>
-  chooseChallenge(input: { strategy: 'evidence_sprint' }): Promise<WorkspaceLike>
-  completeEvidenceSprint(input: { title: string; summary: string; proofUrl: string }): Promise<WorkspaceLike>
-  requestApplication(): Promise<WorkspaceLike>
+  getWorkspace(): Promise<WorkspaceLike>
+  analyzeJob(input: { title: string; company: string; location: string; description: string; pursuitId?: string }): Promise<WorkspaceLike>
+  chooseChallenge(pursuitId: string): Promise<WorkspaceLike>
+  completeEvidenceSprint(pursuitId: string, input: { title: string; summary: string; proofUrl: string }): Promise<WorkspaceLike>
+  requestApplication(pursuitId: string): Promise<WorkspaceLike>
   decideAction(input: { actionId: string; expectedVersion: number; decision: 'approve' | 'reject' }): Promise<WorkspaceLike>
-  simulateHrMessage(input: { kind: 'salary_question' }): Promise<WorkspaceLike>
+  simulateHrMessage(pursuitId: string, input: { kind: 'salary_question' }): Promise<WorkspaceLike>
 }
 
 function orchestrator(): { service: OrchestratorLike; submitted: string[]; sentReplies: string[] } {
@@ -30,6 +32,7 @@ function orchestrator(): { service: OrchestratorLike; submitted: string[]; sentR
     async transaction<T>(work: (draft: WorkspaceLike) => Promise<T> | T): Promise<T> {
       const draft = structuredClone(state.current ?? {
         mission: null,
+        pursuits: [],
         jobs: [],
         tasks: [],
         evidence: [],
@@ -110,29 +113,32 @@ describe('CareerOrchestrator golden loop', () => {
     const { service, submitted, sentReplies } = orchestrator()
 
     let workspace = await service.resetDemo()
-    expect(workspace.mission).toMatchObject({ stage: 'profile_ready', ownerAgent: 'job_execution' })
+    expect(workspace.mission).toMatchObject({ status: 'active', ownerAgent: 'job_execution' })
+    expect(workspace.pursuits).toHaveLength(1)
+    expect(workspace.pursuits[0]).toMatchObject({ stage: 'discovered', route: 'direct' })
+    const pursuitId = workspace.pursuits[0]!.id
 
     workspace = await service.analyzeJob(jd)
-    expect(workspace.mission).toMatchObject({ stage: 'job_analyzed', ownerAgent: 'job_execution' })
+    expect(workspace.pursuits[0]).toMatchObject({ stage: 'qualified', route: 'direct' })
 
-    workspace = await service.chooseChallenge({ strategy: 'evidence_sprint' })
-    expect(workspace.mission).toMatchObject({ stage: 'evidence_sprint', ownerAgent: 'interview_growth' })
+    workspace = await service.chooseChallenge(pursuitId)
+    expect(workspace.pursuits[0]).toMatchObject({ stage: 'evidence_sprint', route: 'growth' })
     expect(workspace.tasks.at(-1)?.handoff).toMatchObject({
       fromAgent: 'job_execution',
       toAgent: 'interview_growth',
     })
 
-    workspace = await service.completeEvidenceSprint({
+    workspace = await service.completeEvidenceSprint(pursuitId, {
       title: '大学生求职 Agent 产品方案',
       summary: '完成用户问题、状态流、审批节点与恢复机制设计。',
       proofUrl: 'local://portfolio/career-agent',
     })
-    expect(workspace.mission).toMatchObject({ stage: 'resume_updated', ownerAgent: 'job_execution' })
+    expect(workspace.pursuits[0]).toMatchObject({ stage: 'materials_ready' })
     expect(workspace.evidence).toHaveLength(1)
     expect(workspace.memories.some((item) => item.evidenceIds.includes(workspace.evidence[0]!.id))).toBe(true)
     expect(workspace.resumes[0]?.evidenceIds).toEqual([workspace.evidence[0]!.id])
 
-    workspace = await service.requestApplication()
+    workspace = await service.requestApplication(pursuitId)
     const applicationAction = workspace.actions.at(-1)!
     expect(applicationAction).toMatchObject({
       type: 'submit_application',
@@ -146,13 +152,13 @@ describe('CareerOrchestrator golden loop', () => {
       expectedVersion: applicationAction.version,
       decision: 'approve',
     })
-    expect(workspace.mission?.stage).toBe('application_submitted')
+    expect(workspace.pursuits[0]?.stage).toBe('application_submitted')
     expect(workspace.applications[0]).toMatchObject({ status: 'submitted', externalId: 'mock-ats-001' })
     expect(submitted).toHaveLength(1)
 
-    workspace = await service.simulateHrMessage({ kind: 'salary_question' })
+    workspace = await service.simulateHrMessage(pursuitId, { kind: 'salary_question' })
     const replyAction = workspace.actions.at(-1)!
-    expect(workspace.mission?.stage).toBe('hr_active')
+    expect(workspace.pursuits[0]?.stage).toBe('hr_active')
     expect(replyAction).toMatchObject({ type: 'send_hr_reply', risk: 'red', status: 'awaiting_approval' })
     expect(sentReplies).toHaveLength(0)
 
@@ -171,14 +177,16 @@ describe('CareerOrchestrator golden loop', () => {
   it('rejects stale or repeated approval decisions', async () => {
     const { service } = orchestrator()
     await service.resetDemo()
+    const ws0 = await service.getWorkspace()
+    const pursuitId = ws0.pursuits[0]!.id
     await service.analyzeJob(jd)
-    await service.chooseChallenge({ strategy: 'evidence_sprint' })
-    await service.completeEvidenceSprint({
+    await service.chooseChallenge(pursuitId)
+    await service.completeEvidenceSprint(pursuitId, {
       title: '大学生求职 Agent 产品方案',
       summary: '完成用户问题、状态流、审批节点与恢复机制设计。',
       proofUrl: 'local://portfolio/career-agent',
     })
-    const workspace = await service.requestApplication()
+    const workspace = await service.requestApplication(pursuitId)
     const action = workspace.actions.at(-1)!
     await service.decideAction({ actionId: action.id, expectedVersion: action.version, decision: 'approve' })
 

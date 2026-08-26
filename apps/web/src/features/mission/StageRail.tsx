@@ -1,20 +1,20 @@
 import { useEffect, useRef } from 'react'
 import { Check } from 'lucide-react'
-import type { MissionStage } from '@career/core'
+import type { PursuitStage } from '@career/core'
 
-const stages: Array<{ id: MissionStage; label: string; short: string }> = [
-  { id: 'profile_ready', label: '档案就绪', short: '档案' },
-  { id: 'job_analyzed', label: '岗位判断', short: '岗位' },
-  { id: 'challenge_selected', label: '挑战决策', short: '挑战' },
+const stages: Array<{ id: PursuitStage; label: string; short: string }> = [
+  { id: 'discovered', label: '岗位导入', short: '导入' },
+  { id: 'qualified', label: '岗位判断', short: '岗位' },
+  { id: 'growth_plan', label: '挑战决策', short: '挑战' },
   { id: 'evidence_sprint', label: '证据冲刺', short: '证据' },
-  { id: 'resume_updated', label: '简历更新', short: '简历' },
+  { id: 'materials_ready', label: '简历更新', short: '简历' },
   { id: 'application_awaiting_approval', label: '投递确认', short: '投递' },
   { id: 'application_submitted', label: '投递完成', short: '完成' },
   { id: 'hr_active', label: 'HR 沟通', short: 'HR' },
   { id: 'completed', label: '任务完成', short: '归档' },
 ]
 
-export function StageRail({ current }: { current: MissionStage }) {
+export function StageRail({ current }: { current: PursuitStage }) {
   const railRef = useRef<HTMLOListElement>(null)
   const activeIndex = stages.findIndex((stage) => stage.id === current)
   const progress = activeIndex > 0 ? Math.round((activeIndex / (stages.length - 1)) * 100) : 0

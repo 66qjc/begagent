@@ -1,10 +1,12 @@
 # Future framework evaluation protocol
 
-> 状态：**Gated, ready for Spike**（Baseline 已 Frozen，Spike 执行授权已获用户批准；尚无运行证据，未选出 winner）
+> 状态：**Evaluated** — Spike 已完成，winner 已选出，见 [ADR-001](./ADR-001-agent-harness.md)
 
-[Business Baseline 索引](../product/README.md) 已由用户明确标记为 `Frozen`，用户已批准进入框架验证阶段。当前执行方案见[Agent Harness Evaluation Implementation Plan](../superpowers/plans/2026-08-25-agent-harness-evaluation.md)。该方案从第一性原理把验证限制为一个主 Harness：Mastra 代表集成度、开发时间与可用性，LangGraph.js 代表持久编排、interrupt 与恢复控制；两者必须使用同一 fixture、共享 adapters 和 16 工程小时总 timebox，验证顺序为 Mastra 先、LangGraph.js 后。OpenAI Agents SDK JS 与 Vercel AI SDK 保持 comparison／adapter 角色，不得作为第二套主编排混入候选实现。
+[Agent Harness 评估](../superpowers/plans/2026-08-25-agent-harness-evaluation.md) 已在 2026-08-25 完成。两个候选（`@mastra/core@1.61.0` Apache-2.0、`@langchain/langgraph@1.4.12` MIT）在同一业务 fixture、共享 adapters 和 16 工程小时 timebox 下通过了全部 hard gate。评分结果：Mastra 89/100，LangGraph.js 91/100；分差 2（≤3），按 tie breaker 规则选出 **LangGraph.js** 为 winner。完整评分见 `experiments/agent-harness/results/scorecard.json`，决策记录见 [ADR-001](./ADR-001-agent-harness.md)。
 
-本文件唯一拥有未来主工作流框架的评估协议，不拥有业务定义、领域状态、授权、connector 或产品创新定义。它是对[Business Baseline 索引](../product/README.md)的从属文件：**Baseline 已 Frozen，Spike 执行授权已获批准，但运行证据产生前不得宣布任何框架胜出、不得迁移现有业务代码、不得改写冻结的业务定义。** 当前没有 framework winner，也不从文档审阅推断运行时兼容性。
+LangGraph.js 只拥有工作流 checkpoint、interrupt、节点调度和运行事件；beg 继续拥有领域模型、PromptContract、DelegationEnvelope、SideEffectLedger、ContextPackage、缓存规则、connector 和 OutcomeOptimizer。框架 state 不得成为业务真值。OpenAI Agents SDK JS 与 Vercel AI SDK 保持 comparison／adapter 角色。
+
+后续实施须先取得用户的实施授权，才可迁移现有业务代码。Mastra 作为已验证备选（全部 hard gate 通过，89/100）保留在 ADR 回退路径中。
 
 ## 候选角色与官方资料
 
@@ -64,4 +66,4 @@
 
 若总分相同，先选择所需基础设施组件较少的候选；仍相同，再选择 `beg` 业务模型与框架耦合更低的候选。两项仍无法区分时，记录为平局并由用户明确裁决，**不**以直觉选型。
 
-决策记录必须附各项原始证据、固定版本、评分、gate 结果、偏差和被拒候选的原因。Baseline 已 Frozen 且 Spike 执行授权已获批准；运行证据产生并经 ADR 记录、本文件与 AGENTS.md 同步修订前，不得迁移现有业务代码或宣布 winner。当前 winner：**无（未评估）**。
+决策记录必须附各项原始证据、固定版本、评分、gate 结果、偏差和被拒候选的原因。Spike 已完成；决策记录见 [ADR-001](./ADR-001-agent-harness.md)，评分见 `experiments/agent-harness/results/scorecard.json`。后续实施须先取得用户的实施授权，才可迁移现有业务代码。当前 winner：**LangGraph.js**（`@langchain/langgraph@1.4.12`，MIT）。

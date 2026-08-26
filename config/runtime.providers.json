@@ -9,6 +9,16 @@
       "protocol": "deterministic"
     },
     {
+      "id": "deepseek-chat",
+      "name": "DeepSeek 官方 API",
+      "enabled": false,
+      "protocol": "chat-completions",
+      "baseUrl": "https://api.deepseek.com/v1",
+      "model": "deepseek-chat",
+      "apiKeyEnv": "CAREER_CHAT_API_KEY",
+      "timeoutMs": 30000
+    },
+    {
       "id": "chat-completions-example",
       "name": "Chat Completions 第三方网关",
       "enabled": false,
@@ -33,7 +43,7 @@
       "name": "Anthropic Messages 第三方网关",
       "enabled": false,
       "protocol": "anthropic-messages",
-      "baseUrl": "https://api.example.com",
+      "baseUrl": "https://api.anthropic.com",
       "model": "replace-with-model-id",
       "apiKeyEnv": "CAREER_ANTHROPIC_API_KEY",
       "timeoutMs": 30000

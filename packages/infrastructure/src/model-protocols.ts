@@ -3,9 +3,25 @@ export interface ModelPrompt {
   prompt: string
 }
 
+export interface ToolSchema {
+  name: string
+  description: string
+  parameters: Record<string, unknown>
+}
+
+export interface ToolCallRequest {
+  name: string
+  arguments: Record<string, string>
+}
+
+export interface ToolAugmentedPrompt extends ModelPrompt {
+  tools?: readonly ToolSchema[]
+}
+
 export interface ModelProtocol {
   readonly protocol: 'chat-completions' | 'responses' | 'anthropic-messages'
   generateText(input: ModelPrompt): Promise<string>
+  generateTextWithTools?(input: ToolAugmentedPrompt): Promise<{ text: string; toolCalls: ToolCallRequest[] }>
 }
 
 interface ProtocolOptions {
@@ -75,6 +91,48 @@ export class OpenAiChatProtocol extends HttpModelProtocol {
       throw new Error('chat-completions provider returned no text content.')
     }
     return text
+  }
+
+  async generateTextWithTools(input: ToolAugmentedPrompt): Promise<{ text: string; toolCalls: ToolCallRequest[] }> {
+    const value = await this.post(
+      `${this.baseUrl}/chat/completions`,
+      { authorization: `Bearer ${this.apiKey}` },
+      {
+        model: this.model,
+        messages: [
+          { role: 'system', content: input.system },
+          { role: 'user', content: input.prompt },
+        ],
+        ...(input.tools && input.tools.length > 0
+          ? {
+              tools: input.tools.map((t) => ({
+                type: 'function',
+                function: {
+                  name: t.name,
+                  description: t.description,
+                  parameters: t.parameters,
+                },
+              })),
+            }
+          : {}),
+      },
+    )
+    const message = asRecord(asArray(asRecord(value)['choices'])[0])['message']
+    const msgRecord = asRecord(message)
+    const text = msgRecord['content']
+    const toolCallsRaw = asArray(msgRecord['tool_calls'])
+    const toolCalls: ToolCallRequest[] = toolCallsRaw.map((tc) => {
+      const fn = asRecord(asRecord(tc)['function'])
+      const argsRaw = fn['arguments']
+      let args: Record<string, string> = {}
+      if (typeof argsRaw === 'string') {
+        try { args = JSON.parse(argsRaw) as Record<string, string> } catch { /* keep empty */ }
+      } else if (argsRaw && typeof argsRaw === 'object') {
+        args = argsRaw as Record<string, string>
+      }
+      return { name: String(fn['name'] ?? ''), arguments: args }
+    })
+    return { text: typeof text === 'string' ? text : '', toolCalls }
   }
 }
 

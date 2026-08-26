@@ -70,14 +70,16 @@ describe('SQLite career repository', () => {
       ids: { next: (() => { let value = 0; return () => `recovery-${++value}` })() },
     })
     await orchestrator.resetDemo()
+    const ws0 = await orchestrator.getWorkspace()
+    const pursuitId = ws0.pursuits[0]!.id
     await orchestrator.analyzeJob(jd)
-    await orchestrator.chooseChallenge({ strategy: 'evidence_sprint' })
-    await orchestrator.completeEvidenceSprint({
+    await orchestrator.chooseChallenge(pursuitId)
+    await orchestrator.completeEvidenceSprint(pursuitId, {
       title: '求职 Agent 产品方案',
       summary: '完成完整状态流和授权设计。',
       proofUrl: 'local://portfolio/career-agent',
     })
-    const before = await orchestrator.requestApplication()
+    const before = await orchestrator.requestApplication(pursuitId)
     first.close()
 
     const second = new (Repository as new (path: string) => {

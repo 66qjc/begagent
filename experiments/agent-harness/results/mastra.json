@@ -1,26 +1,55 @@
 {
   "candidate": "mastra",
   "startedAt": "2026-08-25T15:30:31Z",
+  "completedAt": "2026-08-25T15:57:51Z",
   "package": "@mastra/core@1.61.0",
   "license": "Apache-2.0",
   "directDependencies": 32,
   "peerDependencies": 1,
   "transitiveDependencies": 267,
-  "extraServicesRequired": "none (using @mastra/core built-in MemoryStorage; custom SQLite storage adapter for restart recovery)",
+  "extraServicesRequired": "none (custom SQLite WorkflowsStorage for restart recovery; InMemoryStore for other domains)",
   "docsUrl": "https://mastra.ai/docs",
   "apiSurface": {
     "workflow": "createWorkflow from @mastra/core/workflows",
     "step": "createStep from @mastra/core/workflows",
+    "parallel": ".parallel([step1, step2])",
     "suspend": "suspend({}) inside step execute",
-    "resume": "run.resume({ step, resumeData })",
-    "recovery": "workflow.getWorkflowRunById + createWorkflowStateReader",
-    "storage": "MemoryStorage (in-memory) or custom WorkflowsStorage impl",
-    "streaming": "run.start watch/stream or step writer"
+    "resume": "run.resume({ resumeData })",
+    "recovery": "workflow.getWorkflowRunById + custom SqliteWorkflowsStorage persists snapshots",
+    "storage": "InMemoryStore with stores.workflows replaced by SqliteWorkflowsStorage (custom WorkflowsStorage impl)",
+    "streaming": "run.stream({ inputData }) async iterable with event types: workflow-start, workflow-step-start, workflow-step-result, workflow-step-suspended, workflow-finish",
+    "stateSharing": "stateSchema + setState/getState to share runId across parallel steps and suspend/resume cycles"
   },
   "fiveHourDeadline": "2026-08-25T20:30:31Z",
-  "hardGate": "pending",
-  "firstGreenMinutes": null,
-  "implLOC": null,
-  "glueLOC": null,
-  "failedTestRuns": 0
+  "hardGate": "passed",
+  "hardGateDetails": {
+    "restart": "passed - SqliteWorkflowsStorage persists snapshots; new adapter instance loads snapshot and resumes",
+    "pauseInterrupt": "passed - suspend() pauses at salary-escalation; resume() continues after user approval",
+    "businessState": "passed - DomainStore (SQLite) holds business objects; framework state only saves runId + step references",
+    "customStorage": "passed - implemented SqliteWorkflowsStorage extending WorkflowsStorage with 8 methods",
+    "license": "passed - Apache-2.0"
+  },
+  "firstGreenMinutes": 27,
+  "implLOC": 313,
+  "glueLOC": 129,
+  "failedTestRuns": 5,
+  "tests": 7,
+  "allTestsPassed": true,
+  "typecheckPassed": true,
+  "developerSteps": [
+    "pnpm view for version/license/engines metadata",
+    "pnpm install --ignore-workspace for isolation",
+    "pnpm rebuild --ignore-workspace for native modules",
+    "createWorkflow + createStep with stateSchema for runId sharing",
+    "SqliteWorkflowsStorage custom storage for restart recovery",
+    "run.stream() for event collection with stepName/id payload mapping",
+    "run.resume() for salary-escalation approval",
+    "DomainStore for business object persistence + idempotency ledger"
+  ],
+  "knownIssues": [
+    "stream deprecation warning: WorkflowRunOutput[Symbol.asyncIterator] deprecated, use fullStream",
+    "concurrent resume not supported: storage does not support concurrent updates (acceptable for single-run spike)",
+    "stream close error on suspend: ERR_INVALID_STATE Controller already closed (non-blocking)"
+  ]
 }
+

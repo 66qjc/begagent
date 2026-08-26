@@ -31,14 +31,24 @@ describe('Career domain errors', () => {
     expect(error.name).toBe('NotFoundError')
   })
 
-  it('assertMissionTransition throws IllegalTransitionError for illegal jumps', async () => {
-    const { assertMissionTransition } = await import('@career/core')
-    expect(() => assertMissionTransition('profile_ready', 'completed')).toThrow(IllegalTransitionError)
-    expect(() => assertMissionTransition('profile_ready', 'completed')).toThrow(CareerDomainError)
+  it('assertPursuitTransition throws IllegalTransitionError for illegal jumps', async () => {
+    const { assertPursuitTransition } = await import('@career/core')
+    expect(() => assertPursuitTransition('discovered', 'completed')).toThrow(IllegalTransitionError)
+    expect(() => assertPursuitTransition('discovered', 'completed')).toThrow(CareerDomainError)
   })
 
-  it('assertMissionTransition does not throw for legal sequential transitions', async () => {
+  it('assertPursuitTransition does not throw for legal sequential transitions', async () => {
+    const { assertPursuitTransition } = await import('@career/core')
+    expect(() => assertPursuitTransition('discovered', 'qualified')).not.toThrow()
+  })
+
+  it('assertMissionTransition throws for illegal status transitions', async () => {
     const { assertMissionTransition } = await import('@career/core')
-    expect(() => assertMissionTransition('profile_ready', 'job_analyzed')).not.toThrow()
+    expect(() => assertMissionTransition('completed', 'active')).toThrow(IllegalTransitionError)
+  })
+
+  it('assertMissionTransition allows active to completed', async () => {
+    const { assertMissionTransition } = await import('@career/core')
+    expect(() => assertMissionTransition('active', 'completed')).not.toThrow()
   })
 })

@@ -161,7 +161,7 @@ export class DomainStore {
     stmt.run(key)
   }
 
-  transaction<T>(fn: () => T): T {
+  transaction<T>(fn: () => T): ReturnType<DatabaseType['transaction']> {
     return this.db.transaction(fn)
   }
 

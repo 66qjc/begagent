@@ -13,6 +13,7 @@ import {
 import {
   ControlledMockChannels,
   DeterministicCareerRuntime,
+  LangGraphWorkflowAdapter,
   SqliteCareerRepository,
   type RuntimeCatalogView,
 } from '@career/infrastructure'
@@ -24,6 +25,8 @@ export interface BuildAppOptions {
   runtime?: CareerRuntimePort
   runtimeView?: RuntimeCatalogView
   policyConfig?: CareerPolicyConfig
+  /** When true, constructs a LangGraph workflow adapter and injects it into the orchestrator. */
+  enableWorkflow?: boolean
 }
 
 /** Composes the independent Career API application. */
@@ -43,21 +46,40 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
       enabled: true,
       configured: true,
     }],
+    degraded: false,
   } satisfies RuntimeCatalogView
+
+  const channels = new ControlledMockChannels()
+
+  let workflow: LangGraphWorkflowAdapter | null = null
+  if (options.enableWorkflow) {
+    const checkpointDbPath = options.databasePath.replace(/\.sqlite$/, '.checkpoints.db')
+    workflow = new LangGraphWorkflowAdapter({ dbPath: checkpointDbPath })
+  }
+
   const orchestrator = new CareerOrchestrator({
     repository,
     runtime,
-    channels: new ControlledMockChannels(),
+    channels,
     clock: { now: () => new Date().toISOString() },
     ids: { next: () => randomUUID() },
     policy: createPolicyEvaluator(policyConfig),
+    ...(workflow ? { workflow } : {}),
   })
+
+  // Wire the executor callback now that orchestrator exists
+  if (workflow) {
+    workflow.setExecutor(async (actionId: string) => {
+      await orchestrator.completeApprovedAction(actionId)
+    })
+  }
 
   await app.register(cors, { origin: true })
   registerRoutes(app, orchestrator, {
     runtime: runtimeView,
     policy: policyConfig,
     databaseHealthy: () => repository.healthCheck(),
+    ...(workflow ? { workflow } : {}),
   })
 
   app.setErrorHandler((error, _request, reply) => {
@@ -86,6 +108,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   app.addHook('onClose', async () => {
     repository.close()
     await runtime.close?.()
+    await workflow?.close()
   })
   await app.ready()
   return app

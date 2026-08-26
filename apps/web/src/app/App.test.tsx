@@ -16,6 +16,7 @@ function client(result: Promise<WorkspaceState>): CareerApi {
     requestApplication: passthrough,
     decideAction: passthrough,
     simulateHr: passthrough,
+    createPursuit: passthrough,
   }
 }
 
@@ -25,15 +26,26 @@ function activeWorkspace(): WorkspaceState {
     id: 'mission-1',
     name: 'AI 产品实习求职计划',
     targetRole: 'AI 产品实习生',
-    stage: 'evidence_sprint',
+    status: 'active',
     ownerAgent: 'interview_growth',
     version: 4,
     createdAt: '2026-08-24T01:00:00.000Z',
     updatedAt: '2026-08-24T01:10:00.000Z',
   }
+  state.pursuits.push({
+    id: 'pursuit-1',
+    missionId: 'mission-1',
+    jobId: 'job-1',
+    stage: 'evidence_sprint',
+    route: 'growth',
+    version: 3,
+    createdAt: '2026-08-24T01:00:00.000Z',
+    updatedAt: '2026-08-24T01:10:00.000Z',
+  })
   state.tasks.push({
     id: 'task-1',
     missionId: 'mission-1',
+    pursuitId: 'pursuit-1',
     title: '完成大学生求职 Agent 产品证据冲刺',
     ownerAgent: 'interview_growth',
     status: 'active',
@@ -52,6 +64,7 @@ function activeWorkspace(): WorkspaceState {
   state.actions.push({
     id: 'action-1',
     missionId: 'mission-1',
+    pursuitId: 'pursuit-1',
     type: 'send_hr_reply',
     risk: 'red',
     status: 'awaiting_approval',

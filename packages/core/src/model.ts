@@ -14,6 +14,24 @@ export const MISSION_STAGES = [
 
 export type MissionStage = (typeof MISSION_STAGES)[number]
 
+export const MISSION_STATUS = ['active', 'completed'] as const
+export type MissionStatus = (typeof MISSION_STATUS)[number]
+
+export const PURSUIT_STAGES = [
+  'discovered',
+  'qualified',
+  'growth_plan',
+  'evidence_sprint',
+  'materials_ready',
+  'application_awaiting_approval',
+  'application_submitted',
+  'hr_active',
+  'completed',
+] as const
+
+export type PursuitStage = (typeof PURSUIT_STAGES)[number]
+export type PursuitRoute = 'direct' | 'growth'
+
 export interface ActionPolicyInput {
   risk: ActionRisk
   actionType: string
@@ -38,8 +56,19 @@ export interface CareerMission {
   id: string
   name: string
   targetRole: string
-  stage: MissionStage
+  status: MissionStatus
   ownerAgent: AgentKind
+  version: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface JobPursuit {
+  id: string
+  missionId: string
+  jobId: string
+  stage: PursuitStage
+  route: PursuitRoute
   version: number
   createdAt: string
   updatedAt: string
@@ -59,6 +88,7 @@ export interface AgentHandoff {
 export interface CareerTask {
   id: string
   missionId: string
+  pursuitId: string
   title: string
   ownerAgent: AgentKind
   status: TaskStatus
@@ -77,6 +107,7 @@ export interface JobAnalysis {
 export interface JobOpportunity {
   id: string
   missionId: string
+  pursuitId: string
   title: string
   company: string
   location: string
@@ -101,6 +132,7 @@ export interface MemoryItem {
 export interface EvidenceItem {
   id: string
   missionId: string
+  pursuitId: string
   title: string
   summary: string
   proofUrl: string
@@ -112,6 +144,7 @@ export interface EvidenceItem {
 export interface ResumeVersion {
   id: string
   missionId: string
+  pursuitId: string
   version: number
   headline: string
   summary: string
@@ -123,6 +156,7 @@ export interface ResumeVersion {
 export interface ActionIntent {
   id: string
   missionId: string
+  pursuitId: string
   type: 'submit_application' | 'send_hr_reply'
   risk: ActionRisk
   status: ActionStatus
@@ -137,6 +171,7 @@ export interface ActionIntent {
 export interface ApplicationRecord {
   id: string
   missionId: string
+  pursuitId: string
   jobId: string
   resumeVersionId: string
   status: 'draft' | 'submitted'
@@ -149,6 +184,7 @@ export interface ApplicationRecord {
 export interface HrMessage {
   id: string
   missionId: string
+  pursuitId: string
   direction: 'inbound' | 'outbound'
   content: string
   risk: ActionRisk
@@ -169,6 +205,7 @@ export interface DomainEvent {
 
 export interface WorkspaceState {
   mission: CareerMission | null
+  pursuits: JobPursuit[]
   jobs: JobOpportunity[]
   tasks: CareerTask[]
   memories: MemoryItem[]
@@ -183,6 +220,7 @@ export interface WorkspaceState {
 export function createEmptyWorkspaceState(): WorkspaceState {
   return {
     mission: null,
+    pursuits: [],
     jobs: [],
     tasks: [],
     memories: [],

@@ -32,6 +32,8 @@ export interface RuntimeCatalogView {
   activeProviderId: string
   activeProtocol: RuntimeProviderConfig['protocol']
   providers: RuntimeProviderView[]
+  /** True when the active remote provider's API key was missing and the runtime degraded to deterministic. */
+  degraded: boolean
 }
 
 interface RuntimeFactoryOptions {
@@ -79,13 +81,25 @@ export function createConfiguredRuntime(
         activeProviderId: active.id,
         activeProtocol: active.protocol,
         providers,
+        degraded: false,
       },
     }
   }
 
   const apiKey = env[active.apiKeyEnv]
   if (!apiKey) {
-    throw new Error(`Runtime provider ${active.id} requires environment variable ${active.apiKeyEnv}.`)
+    // Graceful degradation: fall back to deterministic when the remote key is missing,
+    // so the contest demo never crashes on a missing environment variable.
+    return {
+      runtime: new DeterministicCareerRuntime(),
+      view: {
+        version: config.version,
+        activeProviderId: active.id,
+        activeProtocol: 'deterministic',
+        providers,
+        degraded: true,
+      },
+    }
   }
   const protocol = createProtocol(active, apiKey, options.fetchImpl)
   return {
@@ -95,6 +109,7 @@ export function createConfiguredRuntime(
       activeProviderId: active.id,
       activeProtocol: active.protocol,
       providers,
+      degraded: false,
     },
   }
 }

@@ -1,8 +1,8 @@
 # AGENTS.md — beg
 
-## 治理门：冻结中的产品演进
+## 治理门：框架评估已完成
 
-[Business Baseline](./docs/product/README.md) 的 01–08 分册均为 **Confirmed**，总索引现为 **Frozen**。现在可以按框架评估协议准备 framework spike，但在候选框架通过共同场景验证、ADR 记录完成并获得相应实施授权前，仍不得添加框架依赖、进行业务重构或改写现有原型。当前技术约束只用于维护和验证冻结的黄金路径原型，并不是未来架构的永久预批准。未来架构只有在获选框架 ADR 记录完成且本文件与相应架构文档被有意同步修订后，才可迁移或替换当前边界。
+[Business Baseline](./docs/product/README.md) 的 01–08 分册均为 **Confirmed**，总索引现为 **Frozen**。Framework Spike 已完成：[ADR-001](./docs/framework/ADR-001-agent-harness.md) 记录了 `@langchain/langgraph@1.4.12`（MIT）为 winner，`@mastra/core@1.61.0`（Apache-2.0）为已验证备选。在获得用户的实施授权前，仍不得添加框架依赖到产品代码、进行业务重构或改写现有原型。当前技术约束只用于维护和验证冻结的黄金路径原型。框架评估的运行证据、评分和结论保存在 `experiments/agent-harness/` 下，与产品代码隔离。
 
 本文件是所有 AI 编码 Agent 维护或验证当前原型时的统一规范。先阅读本文件、[文档总导航](./docs/README.md)和相关现役文档；原型时期的架构与产品资料仅见[历史归档](./docs/archive/prototype-v0/README.md)，不构成未来产品权威。
 

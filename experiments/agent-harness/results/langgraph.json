@@ -1,0 +1,54 @@
+{
+  "candidate": "langgraph",
+  "startedAt": "2026-08-25T15:58:22Z",
+  "package": "@langchain/langgraph@1.4.12",
+  "license": "MIT",
+  "directDependencies": 4,
+  "peerDependencies": 2,
+  "transitiveDependencies": 267,
+  "extraServicesRequired": "none (MemorySaver for in-memory; custom SQLite checkpointer for restart recovery)",
+  "docsUrl": "https://docs.langchain.com/oss/javascript/langgraph/overview",
+  "apiSurface": {
+    "graph": "StateGraph + Annotation.Root for state schema",
+    "nodes": "addNode(name, fn) + addEdge / addConditionalEdges",
+    "parallel": "addEdge(START, nodeA) + addEdge(START, nodeB) for fan-out",
+    "interrupt": "interrupt(value) inside node function",
+    "resume": "graph.invoke(new Command({ resume: value }), config)",
+    "checkpoint": "MemorySaver (in-memory) or custom BaseCheckpointSaver",
+    "streaming": "graph.streamEvents(input, { version: 'v3' }) or graph.stream(input, config)",
+    "threadId": "config.configurable.thread_id as durable pointer"
+  },
+  "fiveHourDeadline": "2026-08-25T20:58:22Z",
+  "hardGate": "passed",
+  "hardGateDetails": {
+    "restart": "passed - SqliteCheckpointSaver persists checkpoints; new adapter instance loads checkpoint and resumes via Command({ resume })",
+    "pauseInterrupt": "passed - interrupt() pauses at salary-escalation; Command({ resume }) continues after user approval",
+    "businessState": "passed - DomainStore (SQLite) holds business objects; graph state only saves runId + node outputs",
+    "customStorage": "passed - implemented SqliteCheckpointSaver extending BaseCheckpointSaver with getTuple/list/put/putWrites/deleteThread",
+    "license": "passed - MIT"
+  },
+  "completedAt": "2026-08-25T16:24:12Z",
+  "firstGreenMinutes": 26,
+  "implLOC": 256,
+  "glueLOC": 151,
+  "failedTestRuns": 4,
+  "tests": 8,
+  "allTestsPassed": true,
+  "typecheckPassed": true,
+  "developerSteps": [
+    "pnpm view for version/license/engines metadata",
+    "StateGraph + Annotation.Root for state schema with reducer",
+    "addEdge(START, nodeA) + addEdge(START, nodeB) for parallel fan-out",
+    "interrupt() in salary-escalation node for human-in-the-loop",
+    "Command({ resume }) to continue after interrupt",
+    "SqliteCheckpointSaver custom BaseCheckpointSaver for restart recovery",
+    "await graph.stream() then for-await to consume stream chunks",
+    "DomainStore for business object persistence + idempotency ledger",
+    "Effect dedup on interrupt re-entry via prior event check"
+  ],
+  "knownIssues": [
+    "graph.stream() returns Promise<IterableReadableStream>, must await before for-await iteration",
+    "Duplicate resume on completed graph re-enters node; dedup handled via event history check",
+    "@langchain/core added as devDependency for RunnableConfig type"
+  ]
+}

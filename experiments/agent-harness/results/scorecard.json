@@ -1,0 +1,59 @@
+{
+  "generatedAt": "2026-08-25T16:26:48.195Z",
+  "fixture": "two concurrent JobPursuits (pursuit-direct + pursuit-growth), salary out-of-envelope, restart recovery, ATS idempotency, Bridge disconnect, cache hit/invalidation",
+  "candidates": [
+    {
+      "name": "mastra",
+      "hardGatePassed": true,
+      "scores": {
+        "durable_execution_recovery": 24,
+        "state_authorization_governance": 19,
+        "human_in_the_loop": 15,
+        "typescript_dx": 10,
+        "observability_replay": 9,
+        "adapter_replaceability": 9,
+        "minimal_runtime": 3
+      },
+      "totalScore": 89,
+      "rawMetrics": {
+        "implLOC": 313,
+        "glueLOC": 129,
+        "firstGreenMinutes": 27,
+        "failedTestRuns": 5,
+        "directDependencies": 32,
+        "transitiveDependencies": 267,
+        "tests": 7,
+        "license": "Apache-2.0"
+      },
+      "evidenceFile": "results/mastra.json"
+    },
+    {
+      "name": "langgraph",
+      "hardGatePassed": true,
+      "scores": {
+        "durable_execution_recovery": 24,
+        "state_authorization_governance": 19,
+        "human_in_the_loop": 15,
+        "typescript_dx": 10,
+        "observability_replay": 9,
+        "adapter_replaceability": 9,
+        "minimal_runtime": 5
+      },
+      "totalScore": 91,
+      "rawMetrics": {
+        "implLOC": 256,
+        "glueLOC": 151,
+        "firstGreenMinutes": 26,
+        "failedTestRuns": 4,
+        "directDependencies": 4,
+        "transitiveDependencies": 267,
+        "tests": 8,
+        "license": "MIT"
+      },
+      "evidenceFile": "results/langgraph.json"
+    }
+  ],
+  "tieBreaker": "first_green_time: langgraph 26min < mastra 27min",
+  "winner": "langgraph",
+  "conclusion": "Winner: langgraph. Both candidates passed hard gates. Mastra 89/100, LangGraph 91/100. Tie breaker: first_green_time: langgraph 26min < mastra 27min."
+}

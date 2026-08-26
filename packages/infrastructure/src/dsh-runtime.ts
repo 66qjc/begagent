@@ -1,5 +1,18 @@
 import { DeepSeekHarness, type DeepSeekHarnessOptions } from '@deepseek-ai/dsh-sdk-client'
 import type { CareerRuntimePort } from '@career/core'
+import {
+  buildAnalyzeJobPrompt,
+  buildEvidenceSprintPrompt,
+  buildResumePrompt,
+  buildHrReplyPrompt,
+} from './career-prompts.ts'
+import {
+  JobAnalysisSchema,
+  EvidenceSprintSchema,
+  ResumeSchema,
+  HrReplySchema,
+  validateArtifact,
+} from './career-schemas.ts'
 
 export interface DshCareerRuntimeOptions extends DeepSeekHarnessOptions {}
 
@@ -12,49 +25,35 @@ export class DshCareerRuntime implements CareerRuntimePort {
   }
 
   async analyzeJob(input: Parameters<CareerRuntimePort['analyzeJob']>[0]): ReturnType<CareerRuntimePort['analyzeJob']> {
-    return this.runJson('career-job-execution', [
-      '你是求职执行 Agent。只返回 JSON，不要 Markdown。',
-      '输出字段：recommendation(string), summary(string), gaps(string[]), evidenceStrength(string)。',
-      `岗位：${JSON.stringify(input)}`,
-    ].join('\n'))
+    const { system, prompt } = buildAnalyzeJobPrompt(input)
+    const text = await this.runPrompt('career-job-execution', system, prompt)
+    return validateArtifact('job analysis', text, JobAnalysisSchema)
   }
 
   async planEvidenceSprint(): ReturnType<CareerRuntimePort['planEvidenceSprint']> {
-    return this.runJson('career-interview-growth', [
-      '你是面试成长 Agent。设计一个 1 至 3 天可由学生真实完成的岗位证据冲刺。',
-      '只返回 JSON，不要 Markdown。输出字段：title(string), objective(string)。',
-    ].join('\n'))
+    const { system, prompt } = buildEvidenceSprintPrompt()
+    const text = await this.runPrompt('career-interview-growth', system, prompt)
+    return validateArtifact('evidence sprint', text, EvidenceSprintSchema)
   }
 
   async updateResume(input: Parameters<CareerRuntimePort['updateResume']>[0]): ReturnType<CareerRuntimePort['updateResume']> {
-    return this.runJson('career-advantage-resume', [
-      '你是优势简历 Agent。只能使用给定证据，不得扩写不存在的结果。',
-      '只返回 JSON，不要 Markdown。输出字段：headline(string), summary(string), claims(string[])。',
-      `证据：${JSON.stringify(input)}`,
-    ].join('\n'))
+    const { system, prompt } = buildResumePrompt(input)
+    const text = await this.runPrompt('career-advantage-resume', system, prompt)
+    return validateArtifact('resume update', text, ResumeSchema)
   }
 
   async draftHrReply(input: Parameters<CareerRuntimePort['draftHrReply']>[0]): ReturnType<CareerRuntimePort['draftHrReply']> {
-    return this.runJson('career-job-execution', [
-      '你是求职执行 Agent。起草礼貌回复，但不得替用户承诺薪资、地点或到岗时间。',
-      '只返回 JSON，不要 Markdown。输出字段：content(string), risk，risk 必须为 red。',
-      `HR 消息：${JSON.stringify(input)}`,
-    ].join('\n'))
+    const { system, prompt } = buildHrReplyPrompt(input)
+    const text = await this.runPrompt('career-job-execution', system, prompt)
+    return validateArtifact('HR reply', text, HrReplySchema)
   }
 
   async close(): Promise<void> {
     await this.harness.close()
   }
 
-  private async runJson<T>(sessionId: string, prompt: string): Promise<T> {
-    const result = await this.harness.run(prompt, { sessionId })
-    const normalized = result.finalResponse.trim()
-      .replace(/^```(?:json)?\s*/i, '')
-      .replace(/\s*```$/, '')
-    const parsed: unknown = JSON.parse(normalized)
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      throw new Error('DeepSeek Harness returned a non-object career response.')
-    }
-    return parsed as T
+  private async runPrompt(sessionId: string, system: string, prompt: string): Promise<string> {
+    const result = await this.harness.run(`${system}\n\n${prompt}`, { sessionId })
+    return result.finalResponse
   }
 }

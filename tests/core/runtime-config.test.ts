@@ -77,16 +77,18 @@ describe('runtime provider catalog', () => {
     expect(authorization).toBe('Bearer resolved-secret')
   })
 
-  it('rejects an enabled remote provider when its environment secret is missing', () => {
+  it('degrades to deterministic when an enabled remote provider secret is missing', () => {
     const schema = (contracts as Record<string, unknown>).RuntimeProvidersConfigSchema as {
       parse(value: unknown): unknown
     }
     const create = (infrastructure as Record<string, unknown>).createConfiguredRuntime as
-      (config: unknown, options?: unknown) => unknown
+      (config: unknown, options?: unknown) => { view: { activeProtocol: string; degraded: boolean } }
 
-    expect(() => create(schema.parse(catalog), {
+    const result = create(schema.parse(catalog), {
       env: { CAREER_RUNTIME_PROVIDER: 'responses-gateway' },
-    })).toThrow('requires environment variable TEST_RESPONSES_KEY')
+    })
+    expect(result.view.activeProtocol).toBe('deterministic')
+    expect(result.view.degraded).toBe(true)
   })
 
   it('returns a redacted provider view', () => {

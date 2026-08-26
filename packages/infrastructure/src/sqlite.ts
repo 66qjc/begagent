@@ -8,6 +8,7 @@ import {
 } from '@career/core'
 
 const PROJECTION_TABLES = [
+  'pursuits',
   'jobs',
   'tasks',
   'memory_items',
@@ -21,6 +22,7 @@ const PROJECTION_TABLES = [
 type ProjectionTable = (typeof PROJECTION_TABLES)[number]
 
 const STATE_KEYS: Record<ProjectionTable, keyof WorkspaceState> = {
+  pursuits: 'pursuits',
   jobs: 'jobs',
   tasks: 'tasks',
   memory_items: 'memories',
@@ -89,6 +91,11 @@ export class SqliteCareerRepository implements CareerRepository {
         payload TEXT NOT NULL
       );
 
+      CREATE TABLE IF NOT EXISTS pursuits (
+        id TEXT PRIMARY KEY,
+        mission_id TEXT NOT NULL REFERENCES missions(id) ON DELETE CASCADE,
+        payload TEXT NOT NULL
+      );
       CREATE TABLE IF NOT EXISTS jobs (
         id TEXT PRIMARY KEY,
         mission_id TEXT NOT NULL REFERENCES missions(id) ON DELETE CASCADE,

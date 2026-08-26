@@ -60,28 +60,35 @@ describe('Career Agent HTTP API', () => {
     expect(empty.json()).toMatchObject({ mission: null })
 
     expect((await instance.inject({ method: 'POST', url: '/api/demo/reset' })).statusCode).toBe(200)
+    // Get the pursuitId created by resetDemo
+    const ws0 = (await instance.inject({ method: 'GET', url: '/api/workspace' })).json() as {
+      pursuits: Array<{ id: string }>
+    }
+    const pursuitId = ws0.pursuits[0]!.id
+
     expect((await instance.inject({ method: 'POST', url: '/api/jobs/analyze', payload: jd })).statusCode).toBe(200)
     expect((await instance.inject({
       method: 'POST',
       url: '/api/missions/challenge',
-      payload: { strategy: 'evidence_sprint' },
+      payload: { pursuitId },
     })).statusCode).toBe(200)
     expect((await instance.inject({
       method: 'POST',
       url: '/api/evidence/complete',
       payload: {
+        pursuitId,
         title: '大学生求职执行 Agent',
         summary: '完成任务编排、证据约束、用户审批和中断恢复方案。',
         proofUrl: 'local://portfolio/career-agent',
       },
     })).statusCode).toBe(200)
 
-    let response = await instance.inject({ method: 'POST', url: '/api/applications/request' })
+    let response = await instance.inject({ method: 'POST', url: '/api/applications/request', payload: { pursuitId } })
     let workspace = response.json() as {
-      mission: { stage: string }
+      pursuits: Array<{ stage: string }>
       actions: Array<{ id: string; status: string; version: number }>
     }
-    expect(workspace.mission.stage).toBe('application_awaiting_approval')
+    expect(workspace.pursuits[0]!.stage).toBe('application_awaiting_approval')
     const applicationAction = workspace.actions.at(-1)!
 
     response = await instance.inject({
@@ -90,12 +97,12 @@ describe('Career Agent HTTP API', () => {
       payload: { expectedVersion: applicationAction.version, decision: 'approve' },
     })
     expect(response.statusCode).toBe(200)
-    expect(response.json()).toMatchObject({ mission: { stage: 'application_submitted' } })
+    expect(response.json()).toMatchObject({ pursuits: [{ stage: 'application_submitted' }] })
 
     response = await instance.inject({
       method: 'POST',
       url: '/api/hr/simulate',
-      payload: { kind: 'salary_question' },
+      payload: { pursuitId, kind: 'salary_question' },
     })
     workspace = response.json() as typeof workspace
     const hrAction = workspace.actions.at(-1)!
@@ -108,7 +115,7 @@ describe('Career Agent HTTP API', () => {
     })
     expect(response.statusCode).toBe(200)
     expect(response.json()).toMatchObject({
-      mission: { stage: 'hr_active' },
+      pursuits: [{ stage: 'hr_active' }],
       hrMessages: [{ direction: 'inbound' }, { direction: 'outbound' }],
     })
   })
@@ -125,10 +132,10 @@ describe('Career Agent HTTP API', () => {
     expect(invalid.json()).toMatchObject({ code: 'VALIDATION_ERROR' })
 
     const workspace = (await instance.inject({ method: 'GET', url: '/api/workspace' })).json() as {
-      mission: { stage: string }
+      pursuits: Array<{ stage: string }>
       jobs: unknown[]
     }
-    expect(workspace.mission.stage).toBe('profile_ready')
-    expect(workspace.jobs).toHaveLength(0)
+    expect(workspace.pursuits[0]!.stage).toBe('discovered')
+    expect(workspace.jobs).toHaveLength(1)
   })
 })

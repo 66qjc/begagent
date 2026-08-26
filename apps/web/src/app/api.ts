@@ -3,12 +3,13 @@ import type { WorkspaceState } from '@career/core'
 export interface CareerApi {
   getWorkspace(): Promise<WorkspaceState>
   resetDemo(): Promise<WorkspaceState>
-  analyzeJob(): Promise<WorkspaceState>
-  chooseChallenge(): Promise<WorkspaceState>
-  completeEvidence(): Promise<WorkspaceState>
-  requestApplication(): Promise<WorkspaceState>
+  analyzeJob(pursuitId?: string): Promise<WorkspaceState>
+  createPursuit(job: { title: string; company: string; location: string; description: string }): Promise<WorkspaceState>
+  chooseChallenge(pursuitId: string): Promise<WorkspaceState>
+  completeEvidence(pursuitId: string): Promise<WorkspaceState>
+  requestApplication(pursuitId: string): Promise<WorkspaceState>
   decideAction(actionId: string, expectedVersion: number, decision: 'approve' | 'reject'): Promise<WorkspaceState>
-  simulateHr(): Promise<WorkspaceState>
+  simulateHr(pursuitId: string): Promise<WorkspaceState>
 }
 
 const seededJob = {
@@ -46,13 +47,14 @@ function post(path: string, payload?: unknown): Promise<WorkspaceState> {
 export const careerApi: CareerApi = {
   getWorkspace: () => request('/api/workspace'),
   resetDemo: () => post('/api/demo/reset'),
-  analyzeJob: () => post('/api/jobs/analyze', seededJob),
-  chooseChallenge: () => post('/api/missions/challenge', { strategy: 'evidence_sprint' }),
-  completeEvidence: () => post('/api/evidence/complete', seededEvidence),
-  requestApplication: () => post('/api/applications/request'),
+  analyzeJob: (pursuitId) => post('/api/jobs/analyze', { ...seededJob, ...(pursuitId ? { pursuitId } : {}) }),
+  createPursuit: (job) => post('/api/pursuits', job),
+  chooseChallenge: (pursuitId) => post('/api/missions/challenge', { pursuitId }),
+  completeEvidence: (pursuitId) => post('/api/evidence/complete', { pursuitId, ...seededEvidence }),
+  requestApplication: (pursuitId) => post('/api/applications/request', { pursuitId }),
   decideAction: (actionId, expectedVersion, decision) => post(`/api/actions/${actionId}/decision`, {
     expectedVersion,
     decision,
   }),
-  simulateHr: () => post('/api/hr/simulate', { kind: 'salary_question' }),
+  simulateHr: (pursuitId) => post('/api/hr/simulate', { pursuitId, kind: 'salary_question' }),
 }

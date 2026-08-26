@@ -21,26 +21,29 @@ describe('keyless controlled golden loop', () => {
     })
 
     await orchestrator.resetDemo()
+    const ws0 = await orchestrator.getWorkspace()
+    const pursuitId = ws0.pursuits[0]!.id
     await orchestrator.analyzeJob({
       title: 'AI 产品实习生',
       company: '星河科技',
       location: '杭州',
       description: '负责 AI Agent 产品需求分析、用户研究、原型设计和效果评估，要求能够将真实用户问题拆解为可执行工作流，并使用数据和作品证明判断。'.repeat(2),
+      pursuitId,
     })
-    await orchestrator.chooseChallenge({ strategy: 'evidence_sprint' })
-    await orchestrator.completeEvidenceSprint({
+    await orchestrator.chooseChallenge(pursuitId)
+    await orchestrator.completeEvidenceSprint(pursuitId, {
       title: '大学生求职执行 Agent',
       summary: '完成任务编排、证据约束、用户审批和中断恢复方案。',
       proofUrl: 'local://portfolio/career-agent',
     })
-    let workspace = await orchestrator.requestApplication()
+    let workspace = await orchestrator.requestApplication(pursuitId)
     const applicationAction = workspace.actions.at(-1)!
     workspace = await orchestrator.decideAction({
       actionId: applicationAction.id,
       expectedVersion: applicationAction.version,
       decision: 'approve',
     })
-    workspace = await orchestrator.simulateHrMessage({ kind: 'salary_question' })
+    workspace = await orchestrator.simulateHrMessage(pursuitId, { kind: 'salary_question' })
     const replyAction = workspace.actions.at(-1)!
     workspace = await orchestrator.decideAction({
       actionId: replyAction.id,
@@ -50,6 +53,7 @@ describe('keyless controlled golden loop', () => {
     repository.close()
 
     expect(workspace.jobs).toHaveLength(1)
+    expect(workspace.pursuits).toHaveLength(1)
     expect(workspace.tasks.some((task) => task.handoff?.toAgent === 'interview_growth')).toBe(true)
     expect(workspace.evidence).toHaveLength(1)
     expect(workspace.resumes).toHaveLength(1)

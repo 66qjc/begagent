@@ -121,7 +121,7 @@ describe('ContextCache', () => {
     const key = { sourceId: 'evidence-001', version: 1, contentHash: 'abc', permissionVariant: 'default', schemaVersion: 1 }
     cache.set(key, { summary: 'Company research notes' })
 
-    const hit = cache.get(key)
+    const hit = cache.get(key) as { summary: string } | undefined
     expect(hit).toBeDefined()
     expect(hit!.summary).toBe('Company research notes')
   })
