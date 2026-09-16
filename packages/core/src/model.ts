@@ -141,6 +141,35 @@ export interface EvidenceItem {
   createdAt: string
 }
 
+export type ResumeVerbTier = '支持' | '协助' | '参与' | '负责' | '推动' | '主导'
+
+export interface ResumeMetric {
+  value: string
+  qualifier?: string
+  dimension: string
+}
+
+export interface ResumeBullet {
+  text: string
+  evidenceIds?: string[]
+  verbTier: ResumeVerbTier
+  metrics?: ResumeMetric[]
+}
+
+export interface ResumeSection {
+  title: string
+  role?: string
+  startDate?: string
+  endDate?: string
+  bullets: ResumeBullet[]
+  url?: string
+}
+
+export interface ResumeSkillGroup {
+  name: string
+  keywords: string[]
+}
+
 export interface ResumeVersion {
   id: string
   missionId: string
@@ -148,7 +177,8 @@ export interface ResumeVersion {
   version: number
   headline: string
   summary: string
-  claims: string[]
+  sections: ResumeSection[]
+  skills: ResumeSkillGroup[]
   evidenceIds: string[]
   createdAt: string
 }

@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { CareerOrchestrator } from '@career/core'
+import { CareerOrchestrator, type CareerRuntimePort } from '@career/core'
 import * as infrastructure from '@career/infrastructure'
 
 const cleanup: string[] = []
@@ -11,7 +11,7 @@ afterEach(async () => {
   await Promise.all(cleanup.splice(0).map((path) => rm(path, { recursive: true, force: true })))
 })
 
-function runtime() {
+function runtime(): CareerRuntimePort {
   return {
     analyzeJob: async () => ({
       recommendation: 'growth_application',
@@ -20,7 +20,16 @@ function runtime() {
       evidenceStrength: 'medium',
     }),
     planEvidenceSprint: async () => ({ title: 'AI 产品证据冲刺', objective: '形成岗位证据' }),
-    updateResume: async () => ({ headline: 'AI 产品实习生', summary: '具备 Agent 产品证据。', claims: ['完成 Agent 方案'] }),
+    updateResume: async () => ({
+      headline: 'AI 产品实习生',
+      summary: '具备 Agent 产品证据。',
+      sections: [{
+        title: 'Agent 产品证据冲刺',
+        role: '产品负责人',
+        bullets: [{ text: '**方案设计：**完成 Agent 状态流与证据约束方案', verbTier: '负责' as const, evidenceIds: [] }],
+      }],
+      skills: [{ name: '产品方法论', keywords: ['用户研究', '原型设计'] }],
+    }),
     draftHrReply: async () => ({ content: '需要确认后回复。', risk: 'red' as const }),
   }
 }

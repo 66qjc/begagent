@@ -1,12 +1,12 @@
 # Future framework evaluation protocol
 
-> 状态：**Evaluated** — Spike 已完成，winner 已选出，见 [ADR-001](./ADR-001-agent-harness.md)
+> 状态：**Implemented** — winner LangGraph.js 已落地产品代码（competition v1 起），见 [ADR-001](./ADR-001-agent-harness.md)
 
 [Agent Harness 评估](../superpowers/plans/2026-08-25-agent-harness-evaluation.md) 已在 2026-08-25 完成。两个候选（`@mastra/core@1.61.0` Apache-2.0、`@langchain/langgraph@1.4.12` MIT）在同一业务 fixture、共享 adapters 和 16 工程小时 timebox 下通过了全部 hard gate。评分结果：Mastra 89/100，LangGraph.js 91/100；分差 2（≤3），按 tie breaker 规则选出 **LangGraph.js** 为 winner。完整评分见 `experiments/agent-harness/results/scorecard.json`，决策记录见 [ADR-001](./ADR-001-agent-harness.md)。
 
 LangGraph.js 只拥有工作流 checkpoint、interrupt、节点调度和运行事件；beg 继续拥有领域模型、PromptContract、DelegationEnvelope、SideEffectLedger、ContextPackage、缓存规则、connector 和 OutcomeOptimizer。框架 state 不得成为业务真值。OpenAI Agents SDK JS 与 Vercel AI SDK 保持 comparison／adapter 角色。
 
-后续实施须先取得用户的实施授权，才可迁移现有业务代码。Mastra 作为已验证备选（全部 hard gate 通过，89/100）保留在 ADR 回退路径中。
+实施已自 competition v1（2026-08-26）开始：框架以 `WorkflowPort` 抽象进入产品代码，由 `LangGraphWorkflowAdapter` 承担审批门 checkpoint／interrupt／恢复；ADR-001 的所有权边界继续有效。Mastra 作为已验证备选（全部 hard gate 通过，89/100）保留在 ADR 回退路径中。
 
 ## 候选角色与官方资料
 
@@ -66,4 +66,4 @@ LangGraph.js 只拥有工作流 checkpoint、interrupt、节点调度和运行�
 
 若总分相同，先选择所需基础设施组件较少的候选；仍相同，再选择 `beg` 业务模型与框架耦合更低的候选。两项仍无法区分时，记录为平局并由用户明确裁决，**不**以直觉选型。
 
-决策记录必须附各项原始证据、固定版本、评分、gate 结果、偏差和被拒候选的原因。Spike 已完成；决策记录见 [ADR-001](./ADR-001-agent-harness.md)，评分见 `experiments/agent-harness/results/scorecard.json`。后续实施须先取得用户的实施授权，才可迁移现有业务代码。当前 winner：**LangGraph.js**（`@langchain/langgraph@1.4.12`，MIT）。
+决策记录必须附各项原始证据、固定版本、评分、gate 结果、偏差和被拒候选的原因。Spike 已完成；决策记录见 [ADR-001](./ADR-001-agent-harness.md)，评分见 `experiments/agent-harness/results/scorecard.json`。实施已按上述所有权边界开始（competition v1 起，`WorkflowPort` + `LangGraphWorkflowAdapter`）。当前 winner：**LangGraph.js**（`@langchain/langgraph@1.4.12`，MIT）。

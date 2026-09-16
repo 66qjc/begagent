@@ -5,24 +5,28 @@ import {
   BriefcaseBusiness,
   CheckCircle2,
   Clock3,
-  History,
   Play,
   RefreshCcw,
   RotateCcw,
-  ServerCog,
+  Sun,
+  Moon,
   Target,
   WifiOff,
   X,
+  Sparkles,
+  Loader2,
+  ShieldCheck,
 } from 'lucide-react'
 import type { ActionIntent, PursuitStage, WorkspaceState } from '@career/core'
 import { ApprovalPanel } from '../features/mission/ApprovalPanel.tsx'
-import { AgentStrip } from '../features/mission/AgentStrip.tsx'
-import { StageRail } from '../features/mission/StageRail.tsx'
 import { TraceTimeline } from '../features/mission/TraceTimeline.tsx'
 import { WorkspaceSkeleton } from '../features/mission/WorkspaceSkeleton.tsx'
 import { Sidebar } from '../features/mission/Sidebar.tsx'
 import { JobCard, EvidenceCard, ResumeCard } from '../features/mission/ArtifactCards.tsx'
 import { MemoryPanel, ChannelPanel } from '../features/mission/SidePanels.tsx'
+import { StageRail } from '../features/mission/StageRail.tsx'
+import { AgentStrip } from '../features/mission/AgentStrip.tsx'
+import { ArtifactModal } from '../features/mission/ArtifactModal.tsx'
 import { careerApi, type CareerApi } from './api.ts'
 import '../styles/tokens.css'
 import '../styles/global.css'
@@ -37,6 +41,8 @@ export function App(_props: AppProps) {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
+  const [theme, setTheme] = useState<'dark' | 'light'>('light')
+  const [inspectArtifact, setInspectArtifact] = useState<'job' | 'evidence' | 'resume' | null>(null)
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const load = useCallback(async () => {
@@ -92,17 +98,31 @@ export function App(_props: AppProps) {
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-theme={theme}>
       <a className="skip-link" href="#main">跳到主要内容</a>
-      <Sidebar />
+      <Sidebar workspace={workspace} />
       <main className="app-main" id="main">
         <header className="topbar">
           <div className="mission-heading">
             <div className="mission-mark"><Target size={20} /></div>
-            <div><span>Career Mission</span><h1>{mission.name}</h1></div>
+            <div>
+              <span className="mh-label">beg agent Mission</span>
+              <h1>{mission.name}</h1>
+            </div>
           </div>
           <div className="topbar-actions">
-            <span className="runtime-chip"><span /> 本地运行正常</span>
+            <div className="mission-live-status">
+              <span className="status-beacon active" />
+              <span className="mls-text">{agentShortName(mission.ownerAgent)} 主责中</span>
+            </div>
+            <button
+              className="theme-toggle"
+              aria-label={theme === 'dark' ? '切换为白色主题' : '切换为黑色主题'}
+              onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              <span>{theme === 'dark' ? '白色' : '黑色'}</span>
+            </button>
             <button className="icon-button" aria-label="重置黄金演示" disabled={busy} onClick={() => { void run('演示数据已重置', client.resetDemo) }}>
               <RotateCcw size={17} />
             </button>
@@ -110,7 +130,6 @@ export function App(_props: AppProps) {
         </header>
 
         <div className="workspace">
-          <AgentStrip owner={mission.ownerAgent} />
           {notice ? (
             <div className="toast" role="status" aria-live="polite">
               <CheckCircle2 size={17} />
@@ -119,57 +138,91 @@ export function App(_props: AppProps) {
             </div>
           ) : null}
 
-          <section className="mission-overview panel">
+          {/* Top Agent Collaboration Matrix */}
+          <AgentStrip owner={mission.ownerAgent} />
+
+          {/* Mission Overview & Continuous Stage Flight Rail */}
+          <section className="mission-overview panel editorial-overview">
             <div className="overview-copy">
               <span className="status-kicker"><Activity size={14} /> 当前阶段</span>
               <h2>{stageTitle(pursuitStage)}</h2>
               <p>{stageDescription(pursuitStage)}</p>
             </div>
             <div className="overview-meta">
-              <div><Clock3 size={15} /><span>最近更新</span><strong>{formatTime(mission.updatedAt)}</strong></div>
-              <div><History size={15} /><span>状态版本</span><strong>v{mission.version}</strong></div>
-              <div><ServerCog size={15} /><span>运行模式</span><strong>确定性演示</strong></div>
+              <div>
+                <Clock3 size={15} className="om-icon" />
+                <span>最近更新</span>
+                <strong>{formatTime(mission.updatedAt)}</strong>
+              </div>
             </div>
-            <StageRail current={pursuitStage} />
+
+            {/* Embedded Responsive Stage Flight Rail */}
+            <div className="overview-rail-container">
+              <StageRail current={pursuitStage} />
+            </div>
           </section>
 
-          <div className="workspace-grid">
-            <div className="primary-column">
-              <section className="next-action panel">
+          {/* Main Action Command Grid */}
+          <div className="workspace-grid editorial-grid">
+            <div className="primary-column editorial-primary">
+              {/* Primary Action Focal Point */}
+              <section className={`next-action panel editorial-task action-hero-hub ${pendingAction ? 'has-pending-approval' : ''}`}>
+                <div className="action-hub-ambient-glow" />
                 <div className="panel-heading">
-                  <div><h2>当前任务</h2><p>单任务、单负责人，完成后再交接</p></div>
+                  <div>
+                    <h2>当前任务</h2>
+                    <p>单任务、单负责人，完成后再交接</p>
+                  </div>
                   <span className="owner-badge">{agentShortName(mission.ownerAgent)} 主责</span>
                 </div>
                 <div className="action-body">
-                  <div className="action-symbol"><Play size={23} fill="currentColor" /></div>
+                  <div className={`action-symbol ${busy ? 'is-spinning' : ''}`}>
+                    {busy ? <Loader2 size={24} className="spin-icon" /> : <Play size={23} fill="currentColor" />}
+                  </div>
                   <div className="action-copy">
                     <h3>{activeTask?.title ?? next.title}</h3>
                     <p>{next.description}</p>
                   </div>
                   {next.command && !pendingAction ? (
-                    <button className="button button-primary" disabled={busy} onClick={() => { void run(next.success, next.command!) }}>
+                    <button className="button button-primary button-action-main" disabled={busy} onClick={() => { void run(next.success, next.command!) }}>
                       {busy ? '正在执行' : next.button} <ArrowRight size={16} />
                     </button>
-                  ) : <span className="waiting-label">{pendingAction ? '等待审批' : '当前阶段已完成'}</span>}
+                  ) : (
+                    <span className="waiting-label">
+                      {pendingAction ? '等待审批' : '当前阶段已完成'}
+                    </span>
+                  )}
                 </div>
               </section>
 
-              <div className="artifact-grid">
-                <JobCard workspace={workspace} />
-                <EvidenceCard workspace={workspace} />
-                <ResumeCard workspace={workspace} />
+              {/* Artifact Bento Cards */}
+              <div className="artifact-grid editorial-artifacts">
+                <JobCard workspace={workspace} onInspect={(t) => setInspectArtifact(t)} />
+                <EvidenceCard workspace={workspace} onInspect={(t) => setInspectArtifact(t)} />
+                <ResumeCard workspace={workspace} onInspect={(t) => setInspectArtifact(t)} />
               </div>
 
-              <TraceTimeline events={workspace.events} />
+              {/* Trace Timeline Flight Recorder */}
+              <div className="editorial-trace">
+                <TraceTimeline events={workspace.events} />
+              </div>
             </div>
 
-            <aside className="side-column" aria-label="任务辅助信息">
+            {/* Right Side Column: Security Gate, Memory Vault, Controlled Channels */}
+            <aside className="side-column editorial-side" aria-label="任务辅助信息">
               <ApprovalPanel action={pendingAction} busy={busy} onDecision={decide} />
               <MemoryPanel workspace={workspace} />
               <ChannelPanel workspace={workspace} />
             </aside>
           </div>
         </div>
+
+        {/* Interactive Deep Inspection Modal */}
+        <ArtifactModal
+          type={inspectArtifact}
+          workspace={workspace}
+          onClose={() => setInspectArtifact(null)}
+        />
       </main>
     </div>
   )
@@ -178,7 +231,7 @@ export function App(_props: AppProps) {
 function ErrorScreen({ onRetry }: { onRetry(): void }) {
   return (
     <div className="center-screen error-screen">
-      <div className="error-mark"><WifiOff size={25} /></div>
+      <div className="error-mark"><WifiOff size={28} /></div>
       <h1>无法读取职业工作区</h1>
       <p>API 暂时不可用。确认本地服务启动后重新连接。</p>
       <button className="button button-primary" onClick={onRetry}><RefreshCcw size={16} />重新连接</button>
@@ -189,12 +242,16 @@ function ErrorScreen({ onRetry }: { onRetry(): void }) {
 function EmptyScreen({ busy, onReset }: { busy: boolean; onReset(): void }) {
   return (
     <div className="empty-shell">
-      <div className="brand-lockup"><span className="brand-symbol">启</span><strong>启程 Career OS</strong></div>
+      <div className="brand-lockup"><span className="brand-symbol">beg</span><strong>beg agent</strong><small>begagent</small></div>
       <section className="empty-card">
-        <div className="empty-icon"><BriefcaseBusiness size={28} /></div>
+        <div className="empty-icon"><BriefcaseBusiness size={32} /></div>
+        <div className="empty-badge"><Sparkles size={13} /> 原型黄金演练</div>
         <h1>还没有正在执行的求职计划</h1>
         <p>载入一条完整的 AI 产品实习黄金路径，体验岗位判断、Agent 交接、证据冲刺、投递审批与 HR 沟通。</p>
-        <button className="button button-primary" disabled={busy} onClick={onReset}>载入黄金演示 <ArrowRight size={16} /></button>
+        <button className="button button-primary empty-launch-btn" disabled={busy} onClick={onReset}>
+          {busy ? <Loader2 size={16} className="spin-icon" /> : null}
+          载入黄金演示 <ArrowRight size={16} />
+        </button>
       </section>
     </div>
   )
@@ -202,12 +259,12 @@ function EmptyScreen({ busy, onReset }: { busy: boolean; onReset(): void }) {
 
 function nextCommand(stage: PursuitStage, pursuitId: string, client: CareerApi) {
   const commands: Record<PursuitStage, { title: string; description: string; button: string; success: string; command?: () => Promise<WorkspaceState> }> = {
-    discovered: { title: '导入并判断 AI 产品实习岗位', description: '解析硬性条件、兴趣、竞争证据、差距与投入价值。', button: '开始岗位判断', success: '岗位判断已完成', command: () => client.analyzeJob(pursuitId) },
+    discovered: { title: '发现并判断目标岗位', description: '解析硬性条件、兴趣、竞争证据、差距与投入价值。', button: '开始岗位判断', success: '岗位判断已完成', command: () => client.analyzeJob(pursuitId) },
     qualified: { title: '选择成长型投递路径', description: '把可补齐的岗位差距转化为短期证据冲刺。', button: '接受证据挑战', success: '成长路径已确认', command: () => client.chooseChallenge(pursuitId) },
     growth_plan: { title: '创建岗位证据冲刺', description: '编排器正在准备结构化 Agent 交接。', button: '继续', success: '证据冲刺已创建' },
     evidence_sprint: { title: '完成大学生求职 Agent 产品证据冲刺', description: '确认成果真实完成后，写入证据记忆并触发简历更新。', button: '提交已完成证据', success: '新证据与简历版本已生成', command: () => client.completeEvidence(pursuitId) },
-    materials_ready: { title: '准备岗位申请并生成动作意图', description: '申请信息将写入受控 ATS，最终提交前必须确认。', button: '生成投递申请', success: '投递动作正在等待确认', command: () => client.requestApplication(pursuitId) },
-    application_awaiting_approval: { title: '确认岗位申请', description: '投递被权限策略暂停，批准后只执行一次。', button: '查看审批', success: '等待确认' },
+    materials_ready: { title: '准备岗位申请', description: '申请信息将写入受控 ATS，最终提交前必须确认。', button: '生成投递申请', success: '投递动作正在等待确认', command: () => client.requestApplication(pursuitId) },
+    application_awaiting_approval: { title: '准备岗位申请', description: '投递被权限策略暂停，批准后只执行一次。', button: '查看审批', success: '等待确认' },
     application_submitted: { title: '等待并处理 HR 后续消息', description: '模拟 HR 发起一条包含薪资与到岗时间的敏感询问。', button: '模拟 HR 消息', success: '已收到 HR 敏感询问', command: () => client.simulateHr(pursuitId) },
     hr_active: { title: '维护有上下文的 HR 对话', description: '低风险沟通可自动处理，承诺性内容持续由用户确认。', button: '继续沟通', success: 'HR 上下文已更新' },
     completed: { title: '当前求职任务已完成', description: '所有产物和执行轨迹均已归档。', button: '查看归档', success: '任务已完成' },
@@ -242,3 +299,4 @@ function agentShortName(agent: WorkspaceState['mission'] extends infer _T ? NonN
 function formatTime(value: string): string {
   return new Date(value).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
+

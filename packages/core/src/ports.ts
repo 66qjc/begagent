@@ -1,5 +1,5 @@
 import type { ActionRisk, AnalyzeJobRequest } from '@career/contracts'
-import type { ActionPolicyInput, PolicyDecision, WorkspaceState } from './model.ts'
+import type { ActionPolicyInput, PolicyDecision, ResumeSection, ResumeSkillGroup, WorkspaceState } from './model.ts'
 
 export type ActionPolicyEvaluator = (input: ActionPolicyInput) => PolicyDecision
 
@@ -18,10 +18,18 @@ export interface CareerRuntimePort {
     evidenceStrength: string
   }>
   planEvidenceSprint(): Promise<{ title: string; objective: string }>
-  updateResume(input: { evidenceTitle: string; evidenceSummary: string }): Promise<{
+  updateResume(input: {
+    evidenceTitle: string
+    evidenceSummary: string
+    jobTitle: string
+    jobDescription: string
+    jobGaps: string[]
+    memories: ReadonlyArray<{ layer: string; title: string; content: string }>
+  }): Promise<{
     headline: string
     summary: string
-    claims: string[]
+    sections: ResumeSection[]
+    skills: ResumeSkillGroup[]
   }>
   draftHrReply(input: { message: string }): Promise<{ content: string; risk: Extract<ActionRisk, 'red'> }>
   close?(): Promise<void>

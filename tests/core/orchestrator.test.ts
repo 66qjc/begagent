@@ -70,7 +70,12 @@ function orchestrator(): { service: OrchestratorLike; submitted: string[]; sentR
       return {
         headline: 'AI 产品实习生｜Agent 工作流与用户研究',
         summary: '围绕大学生求职场景设计可恢复的多 Agent 执行闭环。',
-        claims: ['完成求职 Agent 状态流与证据约束方案'],
+        sections: [{
+          title: 'Agent 产品证据冲刺',
+          role: '产品负责人',
+          bullets: [{ text: '**方案设计：**完成求职 Agent 状态流与证据约束方案', verbTier: '负责', evidenceIds: [] }],
+        }],
+        skills: [{ name: '产品方法论', keywords: ['用户研究', '原型设计'] }],
       }
     },
     async draftHrReply() {

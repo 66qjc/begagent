@@ -39,7 +39,29 @@ export class DshCareerRuntime implements CareerRuntimePort {
   async updateResume(input: Parameters<CareerRuntimePort['updateResume']>[0]): ReturnType<CareerRuntimePort['updateResume']> {
     const { system, prompt } = buildResumePrompt(input)
     const text = await this.runPrompt('career-advantage-resume', system, prompt)
-    return validateArtifact('resume update', text, ResumeSchema)
+    const result = validateArtifact('resume update', text, ResumeSchema)
+    return {
+      headline: result.headline,
+      summary: result.summary,
+      sections: result.sections.map((s) => ({
+        title: s.title,
+        ...(s.role !== undefined ? { role: s.role } : {}),
+        ...(s.startDate !== undefined ? { startDate: s.startDate } : {}),
+        ...(s.endDate !== undefined ? { endDate: s.endDate } : {}),
+        ...(s.url !== undefined ? { url: s.url } : {}),
+        bullets: s.bullets.map((b) => ({
+          text: b.text,
+          verbTier: b.verbTier,
+          ...(b.evidenceIds !== undefined ? { evidenceIds: b.evidenceIds } : {}),
+          ...(b.metrics !== undefined ? { metrics: b.metrics.map((m) => ({
+            value: m.value,
+            dimension: m.dimension,
+            ...(m.qualifier !== undefined ? { qualifier: m.qualifier } : {}),
+          })) } : {}),
+        })),
+      })),
+      skills: result.skills,
+    }
   }
 
   async draftHrReply(input: Parameters<CareerRuntimePort['draftHrReply']>[0]): ReturnType<CareerRuntimePort['draftHrReply']> {

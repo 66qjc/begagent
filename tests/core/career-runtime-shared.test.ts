@@ -39,14 +39,34 @@ describe('shared career prompt builders', () => {
     expect(prompt).toBeTruthy()
   })
 
-  it('buildResumePrompt embeds evidence input', () => {
-    const fn = buildResumePrompt as (input: { evidenceTitle: string; evidenceSummary: string }) => { system: string; prompt: string }
-    const input = { evidenceTitle: '测试证据', evidenceSummary: '完成证据约束方案' }
+  it('buildResumePrompt embeds job, evidence and memory context with STAR rules', () => {
+    const fn = buildResumePrompt as (input: {
+      evidenceTitle: string
+      evidenceSummary: string
+      jobTitle: string
+      jobDescription: string
+      jobGaps: string[]
+      memories: ReadonlyArray<{ layer: string; title: string; content: string }>
+    }) => { system: string; prompt: string }
+    const input = {
+      evidenceTitle: '测试证据',
+      evidenceSummary: '完成证据约束方案',
+      jobTitle: 'AI 产品实习生',
+      jobDescription: '负责 AI 产品调研',
+      jobGaps: ['缺少 Agent 产品成果'],
+      memories: [{ layer: 'user', title: '教育背景', content: '数字媒体技术本科' }],
+    }
     const { system, prompt } = fn(input)
 
     expect(system).toContain('优势简历 Agent')
-    expect(system).toContain('claims')
-    expect(prompt).toContain(JSON.stringify(input))
+    expect(system).toContain('sections')
+    expect(system).toContain('skills')
+    expect(system).toContain('动词分级')
+    expect(system).toContain('主导')
+    expect(system).toContain('反造假')
+    expect(prompt).toContain(input.jobTitle)
+    expect(prompt).toContain(input.evidenceTitle)
+    expect(prompt).toContain(input.memories[0]!.title)
   })
 
   it('buildHrReplyPrompt embeds HR message input', () => {

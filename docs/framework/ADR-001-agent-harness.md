@@ -1,6 +1,7 @@
 # ADR-001: Agent Harness 框架选择 — LangGraph.js
 
-> 状态：**Accepted**
+> 状态：**Accepted — 已实施**
+> 实施记录：自 competition v1（2026-08-26 提交 `be5124f`）起，winner 以 `packages/core` 的 `WorkflowPort` 端口 + `packages/infrastructure` 的 `LangGraphWorkflowAdapter` 进入产品代码，仅承担审批门 checkpoint／interrupt／恢复；下文所有权边界继续有效。
 > 日期：2026-08-25
 > 评估协议：[Future framework evaluation protocol](./README.md)
 > 实施计划：[Agent Harness Evaluation Implementation Plan](../superpowers/plans/2026-08-25-agent-harness-evaluation.md)

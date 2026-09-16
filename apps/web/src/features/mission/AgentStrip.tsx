@@ -1,10 +1,31 @@
-import { FileText, Radar, GraduationCap } from 'lucide-react'
+import { FileText, Radar, GraduationCap, Zap, CheckCircle2 } from 'lucide-react'
 import type { AgentKind } from '@career/contracts'
 
 const agents = [
-  { id: 'advantage_resume' as const, label: '优势简历 Agent', icon: FileText, responsibility: '事实与表达' },
-  { id: 'job_execution' as const, label: '求职执行 Agent', icon: Radar, responsibility: '机会与行动' },
-  { id: 'interview_growth' as const, label: '面试成长 Agent', icon: GraduationCap, responsibility: '差距与成长' },
+  {
+    id: 'advantage_resume' as const,
+    label: '优势简历 Agent',
+    icon: FileText,
+    responsibility: '事实与表达',
+    detail: '真实经历锚定 · 动词量化',
+    kindClass: 'agent-resume',
+  },
+  {
+    id: 'job_execution' as const,
+    label: '求职执行 Agent',
+    icon: Radar,
+    responsibility: '机会与行动',
+    detail: '岗位雷达 · ATS 与 HR 联动',
+    kindClass: 'agent-exec',
+  },
+  {
+    id: 'interview_growth' as const,
+    label: '面试成长 Agent',
+    icon: GraduationCap,
+    responsibility: '差距与成长',
+    detail: '短板突破 · 证据冲刺交付',
+    kindClass: 'agent-growth',
+  },
 ]
 
 export function AgentStrip({ owner }: { owner: AgentKind }) {
@@ -14,16 +35,28 @@ export function AgentStrip({ owner }: { owner: AgentKind }) {
         const Icon = agent.icon
         const active = agent.id === owner
         return (
-          <div className={active ? 'agent-chip is-owner' : 'agent-chip'} key={agent.id}>
-            <span className="agent-icon"><Icon size={17} /></span>
-            <span className="agent-copy">
-              <strong>{agent.label}</strong>
-              <small>{active ? '当前主责' : agent.responsibility}</small>
-            </span>
-            <span className={active ? 'live-dot is-active' : 'live-dot'} aria-label={active ? '正在执行' : '待命'} />
+          <div className={`agent-chip ${agent.kindClass}${active ? ' is-owner' : ''}`} key={agent.id}>
+            <div className="agent-icon-wrapper">
+              <span className="agent-icon"><Icon size={18} /></span>
+              {active && <span className="agent-active-ring" />}
+            </div>
+            <div className="agent-copy">
+              <div className="ac-header">
+                <strong>{agent.label}</strong>
+                {active ? (
+                  <span className="owner-crown-tag">
+                    <Zap size={11} className="zap-icon" /> 当前主责
+                  </span>
+                ) : (
+                  <span className="agent-idle-tag"><CheckCircle2 size={11} /> 待命协同</span>
+                )}
+              </div>
+              <small>{active ? agent.detail : agent.responsibility}</small>
+            </div>
           </div>
         )
       })}
     </section>
   )
 }
+

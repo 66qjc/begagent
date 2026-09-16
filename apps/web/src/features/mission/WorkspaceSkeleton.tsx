@@ -3,10 +3,12 @@
  * Lets users see structure during load instead of a generic spinner.
  * Pure CSS shimmer — no external dependency.
  */
+import { Sidebar } from './Sidebar.tsx'
+
 export function WorkspaceSkeleton() {
   return (
     <div className="app-shell" aria-busy="true" aria-label="正在加载职业工作区">
-      <SidebarSkeleton />
+      <Sidebar />
       <main className="app-main">
         <div className="topbar">
           <div className="mission-heading">
@@ -67,21 +69,5 @@ export function WorkspaceSkeleton() {
         </div>
       </main>
     </div>
-  )
-}
-
-function SidebarSkeleton() {
-  return (
-    <aside className="sidebar">
-      <div className="brand-lockup">
-        <div className="skeleton skeleton-brand" />
-        <div className="skeleton skeleton-text" />
-      </div>
-      <nav>
-        {[0, 1, 2, 3, 4].map((i) => (
-          <div className="skeleton skeleton-nav-item" key={i} />
-        ))}
-      </nav>
-    </aside>
   )
 }

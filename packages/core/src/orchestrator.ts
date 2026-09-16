@@ -199,7 +199,19 @@ export class CareerOrchestrator {
   }
 
   async completeEvidenceSprint(pursuitId: string, input: { title: string; summary: string; proofUrl: string }): Promise<WorkspaceState> {
-    const resume = await this.runtime.updateResume({ evidenceTitle: input.title, evidenceSummary: input.summary })
+    const snapshot = await this.repository.snapshot()
+    const pursuit = snapshot.pursuits.find((p) => p.id === pursuitId)
+    const job = snapshot.jobs.find((j) => j.id === pursuit?.jobId)
+    const resume = await this.runtime.updateResume({
+      evidenceTitle: input.title,
+      evidenceSummary: input.summary,
+      jobTitle: job?.title ?? '',
+      jobDescription: job?.description ?? '',
+      jobGaps: job?.analysis.gaps ?? [],
+      memories: snapshot.memories
+        .filter((m) => m.status === 'confirmed')
+        .map((m) => ({ layer: m.layer, title: m.title, content: m.content })),
+    })
     await this.repository.transaction((draft) => {
       const mission = this.requireMission(draft)
       const pursuit = this.requirePursuit(draft, pursuitId)

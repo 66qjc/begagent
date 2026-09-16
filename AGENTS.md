@@ -1,8 +1,8 @@
 # AGENTS.md — beg
 
-## 治理门：框架评估已完成
+## 治理门：winner 已落地，扩大框架使用面须先改文档再改代码
 
-[Business Baseline](./docs/product/README.md) 的 01–08 分册均为 **Confirmed**，总索引现为 **Frozen**。Framework Spike 已完成：[ADR-001](./docs/framework/ADR-001-agent-harness.md) 记录了 `@langchain/langgraph@1.4.12`（MIT）为 winner，`@mastra/core@1.61.0`（Apache-2.0）为已验证备选。在获得用户的实施授权前，仍不得添加框架依赖到产品代码、进行业务重构或改写现有原型。当前技术约束只用于维护和验证冻结的黄金路径原型。框架评估的运行证据、评分和结论保存在 `experiments/agent-harness/` 下，与产品代码隔离。
+[Business Baseline](./docs/product/README.md) 的 01–08 分册均为 **Confirmed**，总索引现为 **Frozen**。Framework Spike 已完成：[ADR-001](./docs/framework/ADR-001-agent-harness.md) 记录了 `@langchain/langgraph@1.4.12`（MIT）为 winner，`@mastra/core@1.61.0`（Apache-2.0）为已验证备选。winner 已按 ADR-001 的所有权边界落地产品代码（自 competition v1，2026-08-26 起）：框架只通过 `packages/core` 的 `WorkflowPort` 进入系统，由 `LangGraphWorkflowAdapter` 实现，仅承担审批门的 checkpoint、interrupt 与恢复。任何新的框架依赖、扩大框架职责或业务重构，仍须先修订本文件与相应 ADR 并取得用户确认，然后才可改代码。框架评估的运行证据、评分和结论保存在 `experiments/agent-harness/` 下，与产品代码隔离。
 
 本文件是所有 AI 编码 Agent 维护或验证当前原型时的统一规范。先阅读本文件、[文档总导航](./docs/README.md)和相关现役文档；原型时期的架构与产品资料仅见[历史归档](./docs/archive/prototype-v0/README.md)，不构成未来产品权威。
 
@@ -16,13 +16,14 @@
 - pnpm monorepo，Node.js 22.19+，TypeScript 5.9（`strict` + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`）。
 - 前端：React 19 + Vite，自研 Career Command Center，不复用任何外部 Agent Web UI。
 - 后端：Fastify 5 + Zod 4，SQLite（better-sqlite3）作为唯一真实状态源。
-- 领域核心层 `packages/core` 不依赖 Fastify、SQLite、DeepSeek Harness 或 React。
+- 审批挂起/恢复走 `WorkflowPort` 抽象：`packages/core` 只定义端口，`@langchain/langgraph` 实现位于 `packages/infrastructure`，graph state 不得成为业务真值。
+- 领域核心层 `packages/core` 不依赖 Fastify、SQLite、DeepSeek Harness、LangGraph 或 React。
 
 ---
 
-## 2. 当前原型的分层与调用边界
+## 2. 分层与调用边界
 
-以下是维护或验证冻结原型时必须遵守的调用边界，不是对未来架构的永久选择。依赖方向固定为：`apps → infrastructure → core → contracts`。反向依赖禁止。
+以下是当前必须遵守的调用边界，不是对未来架构的永久选择。依赖方向固定为：`apps → infrastructure → core → contracts`。反向依赖禁止。
 
 1. **Web 只能调用 API**，不能直接调用 Agent、数据库或外部通道。
 2. **API 只能调用 `CareerOrchestrator`**，不包含业务状态判断，不直接推进 Mission。
@@ -33,8 +34,9 @@
 7. `Evidence` 必须能追溯到用户完成的成果；简历更新只能引用已有证据。
 8. 所有 ATS/HR 副作用**先形成 `ActionIntent`**。策略判定、审批版本检查与幂等键通过后，才调用 `ExternalChannelPort`。
 9. 事件日志记录每次状态变化、交接、审批和外部回执，供 UI 与故障恢复使用。
+10. 审批门可经可选的 `WorkflowPort` 委托持久化工作流：其实现只拥有 checkpoint、interrupt/resume 与节点调度，graph state 只保存 run/stage/action 标识；领域状态仍只属于 `CareerRepository`，未注入工作流时由编排器直驱同一审批路径。
 
-维护或验证原型时，违反以上任一条的改动直接拒绝。未来如需调整边界，须先满足顶部治理门，再随获选 ADR 有意同步修订本文件和相应架构文档，然后才可改代码。
+维护或验证代码时，违反以上任一条的改动直接拒绝。未来如需调整边界，须先满足顶部治理门，再随获选 ADR 有意同步修订本文件和相应架构文档，然后才可改代码。
 
 ---
 
@@ -47,7 +49,7 @@ apps/
 packages/
   contracts/            跨进程 Zod 契约（可被前后端共享）
   core/                 领域模型、状态机、策略、端口、编排器
-  infrastructure/       SQLite、多协议运行时、DSH SDK 适配器、Mock 通道
+  infrastructure/       SQLite、多协议运行时、LangGraph 工作流适配、DSH SDK 适配器、Mock 通道
 config/
   runtime.providers.json  Provider 目录，不保存密钥
   career-policy.json      版本化职业策略
@@ -139,6 +141,8 @@ pnpm start            # 生产构建后本地预览
 - `anthropic-messages` → `POST {baseUrl}/v1/messages`
 - `deterministic` → 本地无密钥比赛模式
 
+支持工具调用的协议允许模型在岗位分析前主动调用只读工具（如查询岗位详情）；工具无外部副作用，模型输出仍须经 Zod 契约校验才成为领域工件。
+
 **第三方模型只能返回**：岗位分析、证据任务、简历候选和 HR 回复草稿。**它不能**直接推进 Mission、确认事实、批准动作或调用 ATS/HR 通道。`GET /api/system/config` 可查当前协议与 Provider 状态，但响应不泄露密钥值或密钥环境变量名。
 
 未设置第三方 Provider 时系统继续使用 `local-demo`。
@@ -155,7 +159,7 @@ pnpm start            # 生产构建后本地预览
 - 黑色造假动作禁止；
 - 未命中规则时**失败关闭**（默认拒绝）。
 
-投递与包含薪资/到岗承诺的 HR 回复先生成动作意图，再经策略与用户审批后执行。外部副作用使用幂等键；状态版本阻止重复或过期审批。
+投递与包含薪资/到岗承诺的 HR 回复先生成动作意图，再经策略与用户审批后执行。外部副作用使用幂等键；状态版本阻止重复或过期审批。审批等待状态可经 `WorkflowPort` 挂起到独立 checkpoint 库（`*.checkpoints.db`），用户决定后恢复执行。
 
 ---
 
@@ -170,7 +174,7 @@ pnpm start            # 生产构建后本地预览
 5. 优势简历 Agent 生成只引用已确认事实的新版本。
 6. 投递形成黄色动作意图，用户批准后受控 Mock ATS 只执行一次。
 7. HR 薪资/到岗问题形成红色动作意图，用户批准后发送草稿。
-8. 关闭并重启进程后，Mission、审批、消息、证据和事件仍可恢复。
+8. 关闭并重启进程后，Mission、审批、消息、证据、事件和工作流 checkpoint 仍可恢复。
 
 验收必须同时满足：领域测试通过、HTTP 全链路通过、SQLite 重启恢复通过、重复审批无重复副作用、TypeScript 严格检查通过、生产构建通过、桌面与移动浏览器无横向溢出且主要操作可交互。
 
@@ -190,3 +194,4 @@ pnpm start            # 生产构建后本地预览
 1. 立即切回 `DeterministicCareerRuntime`，比赛展示与产品状态不受影响。
 2. 如需真实模型，选 Chat Completions / Responses / Anthropic Messages，实现仍统一在 `CareerRuntimePort` 后。
 3. DSH 插件只做可观测性或开发辅助；在 SDK 验证稳定前，不允许插件成为业务必需依赖。
+4. `LangGraphWorkflowAdapter` 异常时，去掉 `WorkflowPort` 注入即回退到编排器直驱的审批路径；审批、幂等与领域状态不受影响。
